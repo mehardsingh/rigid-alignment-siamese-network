@@ -38,14 +38,16 @@ class STN3d(nn.Module):
         x = F.relu(self.bn5(self.fc2(x)))
         x = self.fc3(x) # (B x 7)
 
-        quat_params = x[:, :4] # (batch x 4) 
-        translations = x[:, 4:7] # (batch x 3)
+        quaternions = x[:, :4] # (batch x 4) 
+        norms = torch.norm(quaternions, dim=1, keepdim=True)
+        normalized_quaternions = quaternions / norms
 
-        rotations = quaternion_to_matrix(quat_params) # (batchx3x3)
+        rotations = quaternion_to_matrix(normalized_quaternions) # (batchx3x3)
+        translations = x[:, 4:7] # (batch x 3)
 
         transforms = torch.eye(4).repeat(batchsize, 1, 1) # (batchx4x4)
         transforms[:, :3, :3] = rotations
-        transforms[:, 3, :3] = translations
+        transforms[:, :3, 3] = translations
 
         return transforms, rotations, translations
 

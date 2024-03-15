@@ -7,7 +7,7 @@ from pointnet_utils import PointNetEncoder, feature_transform_reguliarzer
 from pointnet_cls_head import ClsHead
 
 class get_model(nn.Module):
-    def __init__(self, k=40, normal_channel=True):
+    def __init__(self, k=40, normal_channel=True, feature_transform=False):
         super(get_model, self).__init__()
 
         if normal_channel:
@@ -15,7 +15,7 @@ class get_model(nn.Module):
         else:
             channel = 3
         
-        self.feat = PointNetEncoder(global_feat=True, feature_transform=True, channel=channel)
+        self.feat = PointNetEncoder(global_feat=True, feature_transform=feature_transform, channel=channel)
         self.cls_head = ClsHead(k=k)
 
     def forward(self, x):
