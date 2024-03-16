@@ -115,16 +115,13 @@ class PointNetEncoder(nn.Module):
         x = x.transpose(2, 1) # B x N x D=3
         add_ones = torch.ones(B, N, 1) # B x N x 1
         x = torch.cat((x, add_ones), dim=2) # B x N x 4
-        x = torch.bmm(x, transforms) # B x N x 4
+        x = torch.bmm(x, transforms.transpose(2,1)) # B x N x 4
         x = x[:, :, :3] # B x N x 3
 
-        # x = x.transpose(2, 1)
-        # if D > 3:
-        #     feature = x[:, :, 3:]
-        #     x = x[:, :, :3]
-        # x = torch.bmm(x, trans)
-        # if D > 3:
-        #     x = torch.cat([x, feature], dim=2)
+        # add_ones = torch.ones(batched_input.shape[0], batched_input.shape[1], 1)
+        # batched_input_ones = torch.cat((batched_input, add_ones), dim=2) # B x N x 4
+        # batched_output = torch.bmm(batched_input_ones, T_3.transpose(2,1))
+        # batched_output = batched_output[:, :, :3]
 
         x = x.transpose(2, 1)
         x = F.relu(self.bn1(self.conv1(x)))

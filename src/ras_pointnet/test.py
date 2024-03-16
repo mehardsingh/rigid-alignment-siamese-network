@@ -19,4 +19,7 @@ print(torch.sum(predictions[0]))
 
 print()
 print(T_3.shape)
-print(T_64.shape)
+# print(T_64.shape)
+
+print(T_3[0])
+print(T_3[0][:3,:3] @ T_3[0][:3,:3].T)
