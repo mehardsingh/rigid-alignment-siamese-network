@@ -9,39 +9,6 @@ import numpy as np
 import torch.nn.functional as F
 from it_net import ITNet
 
-def apply_tfm(x, transform):
-    device = x.device
-    B = x.shape[0]
-    N = x.shape[2]
-
-    x = x.transpose(2, 1) # B x N x D=3
-    add_ones = torch.ones(B, N, 1) # B x N x 1
-    add_ones = add_ones.to(device)
-    
-    x = torch.cat((x, add_ones), dim=2) # B x N x 4
-    x = torch.bmm(x, transform.transpose(2,1)) # B x N x 4
-    x = x[:, :, :3] # B x N x 3
-    x = x.transpose(2,1)
-
-    return x
-
-def compose_tfms(tfm1, tfm2):
-    R1 = tfm1[:, :3, :3]
-    t1 = tfm1[:, :3, 3].unsqueeze(-1)
-
-    R2 = tfm2[:, :3, :3]
-    t2 = tfm2[:, :3, 3].unsqueeze(-1)
-
-    R_composed = torch.matmul(R2, R1)
-    t_composed = torch.matmul(R2, t1) + t2
-
-    composed_matrix = torch.cat((
-        torch.cat((R_composed, t_composed), dim=2),
-        torch.tensor([[[0, 0, 0, 1]]], dtype=torch.float32, device=tfm1.device).repeat(tfm1.size(0), 1, 1)
-    ), dim=1)
-
-    return composed_matrix
-
 class STNkd(nn.Module):
     def __init__(self, k=64):
         super(STNkd, self).__init__()
@@ -84,8 +51,7 @@ class STNkd(nn.Module):
 class RASNetEncoder(nn.Module):
     def __init__(self, num_iters=5, global_feat=True, feature_transform=False, channel=3):
         super(RASNetEncoder, self).__init__()
-        self.num_iters = num_iters
-        self.it_net = ITNet(channel)
+        self.it_net = ITNet(channel, num_iters)
         self.conv1 = torch.nn.Conv1d(channel, 64, 1)
         self.conv2 = torch.nn.Conv1d(64, 128, 1)
         self.conv3 = torch.nn.Conv1d(128, 1024, 1)
@@ -101,12 +67,7 @@ class RASNetEncoder(nn.Module):
         B, D, N = x.size()
         device = x.device
 
-        all_tfms = torch.zeros(self.num_iters+1,B,4,4).to(device)
-        all_tfms[0] = torch.eye(4).unsqueeze(0).repeat(B, 1, 1).to(device)
-        for i in range(1, self.num_iters+1):
-            curr_transform, curr_rotation, curr_translation = self.it_net(x)
-            x = apply_tfm(x, curr_transform)
-            all_tfms[i] = compose_tfms(all_tfms[i-1], curr_transform)
+        x, all_tfms = self.it_net(x)
 
         x = F.relu(self.bn1(self.conv1(x)))
 
