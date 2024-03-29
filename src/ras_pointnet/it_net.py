@@ -34,7 +34,9 @@ class RigidTNet(nn.Module):
         x = F.relu(self.bn5(self.fc2(x)))
         x = self.fc3(x) # (B x 7)
 
-        quaternions = x[:, :4] # (batch x 4) 
+        quaternions = torch.tensor([1.0, 0.0, 0.0, 0.0]).repeat(batchsize, 1).to(device)
+        quaternions += x[:, :4] # (batch x 4) 
+
         norms = torch.norm(quaternions, dim=1, keepdim=True)
         normalized_quaternions = quaternions / norms
 
@@ -86,16 +88,21 @@ class ITNet(nn.Module):
 
         return composed_matrix
 
-    def forward(self, x):
-        B, D, N = x.size()
-        device = x.device
+    def forward(self, points):
+        B, D, N = points.size()
+        device = points.device
 
-        all_tfms = torch.zeros(self.num_iters+1,B,4,4).to(device)
-        all_tfms[0] = torch.eye(4).unsqueeze(0).repeat(B, 1, 1).to(device)
+        T = torch.zeros(self.num_iters+1,B,4,4).to(device)
+        T = torch.eye(4).unsqueeze(0).repeat(B, 1, 1).to(device)
 
-        for i in range(1, self.num_iters+1):
-            curr_transform, curr_rotation, curr_translation = self.rigid_tnet(x)
-            x = self.apply_tfm(x, curr_transform)
-            all_tfms[i] = self.compose_tfms(all_tfms[i-1], curr_transform)
+        T_deltas = list()
 
-        return x, all_tfms
+        for i in range(self.num_iters):
+            transformed_points = self.apply_tfm(points, T)
+            transformed_points = transformed_points.detach()
+            T_delta, rotation, translation = self.rigid_tnet(transformed_points)
+            T_deltas.append(T_delta)
+            T = self.compose_tfms(T, T_delta)
+
+        transformed_points = self.apply_tfm(points, T)
+        return transformed_points, T, T_deltas
