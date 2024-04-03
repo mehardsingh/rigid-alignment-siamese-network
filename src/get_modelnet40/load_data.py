@@ -3,7 +3,7 @@
 import os
 import numpy as np
 import math, random
-random.seed = 42
+# random.seed = 42
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -139,7 +139,25 @@ class PointCloudData(Dataset):
             pointcloud = self.__preproc__(f)
         return {'pointcloud': pointcloud, 
                 'category': self.classes[category]}
-    
+
+def get_dls_for_viz(batch_size=32):
+    train_transforms = transforms.Compose([
+        PointSampler(1024),
+        Normalize(),
+        RandRotation_z(),
+        ToTensor()
+    ])
+
+    train_ds = PointCloudData("ModelNet40", transform=train_transforms)
+    train_num = int(len(train_ds)*0.8)
+    val_num = len(train_ds) - train_num
+    train_ds, val_ds = torch.utils.data.random_split(train_ds, [train_num, val_num])
+    # test_ds = PointCloudData("ModelNet40", valid=True, folder='test', transform=train_transforms)
+
+    num_workers = 10
+    train_loader = DataLoader(dataset=train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    return train_loader
+
 def get_train_test_dls(batch_size=32):
     train_transforms = transforms.Compose([
         PointSampler(1024),
@@ -155,9 +173,10 @@ def get_train_test_dls(batch_size=32):
     train_ds, val_ds = torch.utils.data.random_split(train_ds, [train_num, val_num])
     test_ds = PointCloudData("ModelNet40", valid=True, folder='test', transform=train_transforms)
 
-    train_loader = DataLoader(dataset=train_ds, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(dataset=val_ds, batch_size=batch_size)
-    test_loader = DataLoader(dataset=test_ds, batch_size=batch_size)
+    num_workers = 10
+    train_loader = DataLoader(dataset=train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
+    val_loader = DataLoader(dataset=val_ds, batch_size=batch_size, num_workers=num_workers, pin_memory=True)
+    test_loader = DataLoader(dataset=test_ds, batch_size=batch_size, num_workers=num_workers, pin_memory=True)
 
     return train_loader, val_loader, test_loader
 
