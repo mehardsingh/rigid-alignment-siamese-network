@@ -144,7 +144,6 @@ def get_dls_for_viz(batch_size=32):
     train_transforms = transforms.Compose([
         PointSampler(1024),
         Normalize(),
-        RandRotation_z(),
         ToTensor()
     ])
 
@@ -162,8 +161,8 @@ def get_train_test_dls(batch_size=32):
     train_transforms = transforms.Compose([
         PointSampler(1024),
         Normalize(),
-        RandRotation_z(),
-        RandomNoise(),
+        # RandRotation_z(),
+        # RandomNoise(),
         ToTensor()
     ])
 

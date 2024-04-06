@@ -1,2 +1,3 @@
 *.pyc
 ModelNet40/
+results/

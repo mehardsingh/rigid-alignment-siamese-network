@@ -16,6 +16,9 @@ sys.path.append("src/pretrain_utils/")
 from transforms import quaternion_to_matrix, apply_tfm, compose_tfms
 from corruptions import tfm_from_rand_pose, create_random_transform
 
+sys.path.append("src/pretrain_utils")
+from corruptions import apply_jitter
+
 class PLoss(nn.Module):
     def __init__(self):
         super(PLoss, self).__init__()
@@ -93,11 +96,20 @@ def train(config):
             optimizer.zero_grad()
             
             pointcloud = batch["pointcloud"].to(torch.float32).to(config.device)
-            pc1 = pointcloud.transpose(2, 1)
 
+            pc1 = pointcloud.transpose(2, 1)
             # random_rigid = tfm_from_rand_pose(pc1.shape[0], config.translation_mean, config.translation_std).to(config.device)
             random_rigid = create_random_transform(pc1.shape[0], max_rotation_deg=config.max_rotation_deg, max_translation=config.max_translation, dtype=pc1.dtype).to(config.device)
             pc2 = apply_tfm(pc1, random_rigid)
+
+            # pointcloud = apply_jitter(pointcloud)
+            # pointcloud = pointcloud.transpose(2, 1)
+
+            # T1 = create_random_transform(pointcloud.shape[0], max_rotation_deg=config.max_rotation_deg, max_translation=config.max_translation, dtype=pointcloud.dtype).to(config.device)
+            # T2 = create_random_transform(pointcloud.shape[0], max_rotation_deg=config.max_rotation_deg, max_translation=config.max_translation, dtype=pointcloud.dtype).to(config.device)
+
+            # pc1 = apply_tfm(pointcloud, T1)
+            # pc2 = apply_tfm(pointcloud, T2)
 
             pc1_tfm, T, T_deltas = it_net(pc1)
             pc2_tfm, T, T_deltas = it_net(pc2)
