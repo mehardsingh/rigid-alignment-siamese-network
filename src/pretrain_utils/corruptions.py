@@ -251,6 +251,21 @@ class Dropout():
         return all_data
     
 def apply_corruptions(pointcloud):
+    # corruptions = [
+    #     Jitter(), 
+    #     # Jitter(sigma=0.02), 
+    #     Scale(same=True, min_scale=0.5, max_scale=2), 
+    #     ElasticDistortion(granularity=[0.1, 0.4], magnitude=[0.2, 0.8]), 
+    #     Dropout(p=0.5)
+    # ]
+    # # corruptions = random.sample(corruptions, 1)
+    # # corruptions = list()
+
+    # corrupted = copy.deepcopy(pointcloud)
+    # for corruption in corruptions:
+    #     corrupted = corruption(corrupted)
+    # return corrupted
+
     corruptions = [Jitter(), Scale(same=True, min_scale=0.5, max_scale=2), ElasticDistortion(), Dropout(p=0.5)]
     corrupted = copy.deepcopy(pointcloud)
     for corruption in corruptions:
