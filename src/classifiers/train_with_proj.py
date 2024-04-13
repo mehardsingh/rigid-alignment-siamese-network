@@ -164,6 +164,7 @@ def train(config):
         all_training_loss = list()
 
     # model.encoder.train()
+    model.proj.train()
     model.head.train()
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -190,9 +191,11 @@ def train(config):
                 avg_train_loss = sum(avg_train_loss) / len(avg_train_loss)
 
                 # model.encoder.eval()
+                model.proj.eval()
                 model.head.eval()
                 val_loss = evaluate(model, val_dl, criterion, config)
                 # model.encoder.train()
+                model.proj.train()
                 model.head.train()
 
                 progress_dict["step"].append(step)
