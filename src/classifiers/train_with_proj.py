@@ -39,12 +39,12 @@ class Classifier(torch.nn.Module):
             feature_transform=False, 
             channel=3
         ).to(config.device)
-        self.proj = Proj().to(config.device)
-        self.head = ClsHeadProj().to(config.device)
+        # self.proj = Proj().to(config.device)
+        self.head = ClsHead().to(config.device)
 
         encoder_checkpoint = torch.load(os.path.join(config.encoder_dir, "checkpoint.pth"))
         self.encoder.load_state_dict(encoder_checkpoint["encoder"])
-        self.proj.load_state_dict(encoder_checkpoint["projection"])
+        # self.proj.load_state_dict(encoder_checkpoint["projection"])
 
         for param in self.encoder.parameters():
             param.requires_grad = False
@@ -58,7 +58,7 @@ class Classifier(torch.nn.Module):
 
     def forward(self, x):
         x, _, _ = self.encoder(x)
-        x = self.proj(x)
+        # x = self.proj(x)
         x = self.head(x)
 
         return x
@@ -80,12 +80,12 @@ class IT_Classifier(torch.nn.Module):
             feature_transform=False, 
             channel=3
         ).to(config.device)
-        self.proj = Proj().to(config.device)
-        self.head = ClsHeadProj().to(config.device)
+        # self.proj = Proj().to(config.device)
+        self.head = ClsHead().to(config.device)
 
         encoder_checkpoint = torch.load(os.path.join(config.encoder_dir, "checkpoint.pth"))
         self.encoder.load_state_dict(encoder_checkpoint["encoder"])
-        self.proj.load_state_dict(encoder_checkpoint["projection"])
+        # self.proj.load_state_dict(encoder_checkpoint["projection"])
 
         for param in self.encoder.parameters():
             param.requires_grad = False
@@ -99,7 +99,7 @@ class IT_Classifier(torch.nn.Module):
     def forward(self, x):
         x, _, _ = self.it_net(x)
         x, _, _ = self.encoder(x)
-        x = self.proj(x)
+        # x = self.proj(x)
         x = self.head(x)
 
         return x
@@ -164,7 +164,7 @@ def train(config):
         all_training_loss = list()
 
     # model.encoder.train()
-    model.proj.train()
+    # model.proj.train()
     model.head.train()
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -191,11 +191,11 @@ def train(config):
                 avg_train_loss = sum(avg_train_loss) / len(avg_train_loss)
 
                 # model.encoder.eval()
-                model.proj.eval()
+                # model.proj.eval()
                 model.head.eval()
                 val_loss = evaluate(model, val_dl, criterion, config)
                 # model.encoder.train()
-                model.proj.train()
+                # model.proj.train()
                 model.head.train()
 
                 progress_dict["step"].append(step)
